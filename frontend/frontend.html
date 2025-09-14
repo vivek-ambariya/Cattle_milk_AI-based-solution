@@ -1,0 +1,2782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cattle Monitoring System</title>
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .chart-container {
+            height: 300px;
+            margin-bottom: 20px;
+        }
+        .badge.bg-success { background-color: #28a745 !important; }
+        .badge.bg-info { background-color: #17a2b8 !important; }
+        .badge.bg-warning { background-color: #ffc107 !important; }
+        .badge.bg-danger { background-color: #dc3545 !important; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header Styles */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.8rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            text-align: center;
+            color: #666;
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        /* Navigation Styles */
+        .nav-tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 15px 25px;
+            background: none;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 1rem;
+            white-space: nowrap;
+            min-width: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .nav-tab:hover:not(.active) {
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateY(-1px);
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Card Styles */
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        .card h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.3);
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            transition: transform 0.6s ease;
+        }
+
+        .stat-card:hover::before {
+            transform: rotate(45deg) translate(50%, 50%);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px) scale(1.02);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .stat-label {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            font-weight: 300;
+            position: relative;
+        }
+
+        /* Charts */
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .chart-container:hover {
+            transform: translateY(-3px);
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+        }
+
+        /* Form Styles */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e8ed;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Buttons */
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        /* Prediction Results */
+        .prediction-result {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            animation: slideIn 0.5s ease;
+            box-shadow: 0 10px 30px rgba(76, 175, 80, 0.3);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Table Styles */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            background: white;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e1e8ed;
+        }
+
+        th {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+
+        tr:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        tr:nth-child(even) {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        /* Health Status Badges */
+        .health-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .health-healthy {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .health-at-risk {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .health-sick {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            border-left: 4px solid;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .alert:hover {
+            transform: translateX(5px);
+        }
+
+        .alert-high {
+            background: #fee;
+            border-color: #e74c3c;
+            color: #c0392b;
+        }
+
+        .alert-medium {
+            background: #fff8e1;
+            border-color: #f39c12;
+            color: #e67e22;
+        }
+
+        .alert-low {
+            background: #e8f5e8;
+            border-color: #27ae60;
+            color: #229954;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Notification Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e1e8ed;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 2.2rem;
+            }
+
+            .nav-tabs {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .nav-tab {
+                width: 100%;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .stat-number {
+                font-size: 2.5rem;
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, #5a6fd8, #6a4190);
+        }
+
+        /* Additional Animations */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .bounce {
+            animation: bounce 1s infinite;
+        }
+        
+        /* Alert items */
+        .alert-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .alert-icon {
+            margin-right: 15px;
+            font-size: 1.5rem;
+            width: 40px;
+            text-align: center;
+        }
+        
+        .alert-content {
+            flex: 1;
+        }
+        
+        .alert-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .alert-desc {
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .alert-time {
+            font-size: 0.8rem;
+            color: #999;
+        }
+        
+        /* Loader overlay */
+        .loader-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            border-radius: 20px;
+        }
+        
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-cow"></i> Cattle Monitoring System</h1>
+            <p>Advanced AI-Powered Livestock Management Platform</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('dashboard')">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </button>
+            <button class="nav-tab" onclick="showTab('predictions')">
+                <i class="fas fa-brain"></i> AI Predictions
+            </button>
+            <button class="nav-tab" onclick="showTab('animals')">
+                <i class="fas fa-list"></i> Animal Records
+            </button>
+            <button class="nav-tab" onclick="showTab('analytics')">
+                <i class="fas fa-chart-area"></i> Analytics
+            </button>
+            <button class="nav-tab" onclick="showTab('reports')">
+                <i class="fas fa-file-alt"></i> Reports
+            </button>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <div id="dashboard-loader" class="loader-overlay">
+                <div class="loader"></div>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-animals">0</div>
+                    <div class="stat-label">Total Animals</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="avg-yield">0</div>
+                    <div class="stat-label">Avg. Milk Yield (L)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="healthy-animals">0</div>
+                    <div class="stat-label">Healthy Animals</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="alerts-count">0</div>
+                    <div class="stat-label">Active Alerts</div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3><i class="fas fa-chart-pie"></i> Health Status Distribution</h3>
+                    <canvas id="healthChart" width="400" height="200"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3><i class="fas fa-chart-bar"></i> Milk Yield by Breed</h3>
+                    <canvas id="yieldChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-exclamation-triangle"></i> Recent Alerts</h3>
+                <div id="alerts-container">
+                    <!-- Alerts will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Predictions Tab -->
+        <div id="predictions" class="tab-content">
+            <div id="predictions-loader" class="loader-overlay">
+                <div class="loader"></div>
+            </div>
+            
+            <div class="form-grid">
+                <div class="card">
+                    <h3><i class="fas fa-cow"></i> Animal Information</h3>
+                    <div class="form-group">
+                        <label for="breed">Breed</label>
+                        <select id="breed">
+                            <option value="Holstein">Holstein</option>
+                            <option value="Jersey">Jersey</option>
+                            <option value="Guernsey">Guernsey</option>
+                            <option value="Sahiwal">Sahiwal</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="age">Age (years)</label>
+                        <input type="number" id="age" min="1" max="15" value="5">
+                    </div>
+                    <div class="form-group">
+                        <label for="weight">Weight (kg)</label>
+                        <input type="number" id="weight" min="300" max="900" value="500">
+                    </div>
+                    <div class="form-group">
+                        <label for="lactation_stage">Lactation Stage</label>
+                        <input type="number" id="lactation_stage" min="1" max="10" value="3">
+                    </div>
+                    <div class="form-group">
+                        <label for="parity">Parity</label>
+                        <input type="number" id="parity" min="1" max="8" value="2">
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fas fa-utensils"></i> Feed & Activity</h3>
+                    <div class="form-group">
+                        <label for="feed_type">Feed Type</label>
+                        <select id="feed_type">
+                            <option value="Green Fodder">Green Fodder</option>
+                            <option value="Dry Fodder">Dry Fodder</option>
+                            <option value="Concentrates">Concentrates</option>
+                            <option value="Mixed">Mixed</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="feed_quantity">Feed Quantity (kg)</label>
+                        <input type="number" id="feed_quantity" min="10" max="40" value="25" step="0.5">
+                    </div>
+                    <div class="form-group">
+                        <label for="walking_distance">Walking Distance (km)</label>
+                        <input type="number" id="walking_distance" min="0" max="10" value="3" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="grazing_duration">Grazing Duration (hours)</label>
+                        <input type="number" id="grazing_duration" min="0" max="12" value="6" step="0.5">
+                    </div>
+                    <div class="form-group">
+                        <label for="rumination_time">Rumination Time (hours)</label>
+                        <input type="number" id="rumination_time" min="4" max="12" value="8" step="0.5">
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fas fa-heartbeat"></i> Health Metrics</h3>
+                    <div class="form-group">
+                        <label for="resting_hours">Resting Hours</label>
+                        <input type="number" id="resting_hours" min="2" max="16" value="8" step="0.5">
+                    </div>
+                    <div class="form-group">
+                        <label for="body_temperature">Body Temperature (°C)</label>
+                        <input type="number" id="body_temperature" min="37" max="41" value="38.5" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="heart_rate">Heart Rate (BPM)</label>
+                        <input type="number" id="heart_rate" min="50" max="100" value="65">
+                    </div>
+                    <div class="form-group">
+                        <label for="ambient_temperature">Ambient Temperature (°C)</label>
+                        <input type="number" id="ambient_temperature" min="0" max="45" value="25" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="humidity">Humidity (%)</label>
+                        <input type="number" id="humidity" min="20" max="95" value="60">
+                    </div>
+                    <div class="form-group">
+                        <label for="season">Season</label>
+                        <select id="season">
+                            <option value="Spring">Spring</option>
+                            <option value="Summer">Summer</option>
+                            <option value="Fall">Fall</option>
+                            <option value="Winter">Winter</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn" onclick="predictYield()">
+                    <i class="fas fa-tint"></i> Predict Milk Yield
+                </button>
+                <button class="btn" onclick="predictHealth()">
+                    <i class="fas fa-stethoscope"></i> Predict Health Status
+                </button>
+                <button class="btn" onclick="clearForm()">
+                    <i class="fas fa-redo"></i> Reset Form
+                </button>
+            </div>
+
+            <div id="prediction-results"></div>
+        </div>
+
+        <!-- Animals Tab -->
+        <div id="animals" class="tab-content">
+            <div id="animals-loader" class="loader-overlay">
+                <div class="loader"></div>
+            </div>
+            
+            <div class="card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3><i class="fas fa-database"></i> Animal Records</h3>
+                    <div class="btn-group">
+                        <button class="btn" onclick="showAddAnimalModal()">
+                            <i class="fas fa-plus"></i> Add New Animal
+                        </button>
+                        <button class="btn" onclick="exportAnimalData('csv')">
+                            <i class="fas fa-file-csv"></i> Export CSV
+                        </button>
+                        <button class="btn" onclick="exportAnimalData('pdf')">
+                            <i class="fas fa-file-pdf"></i> Export PDF
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group" style="max-width: 300px;">
+                    <label for="search-animals">Search Animals</label>
+                    <input type="text" id="search-animals" placeholder="Search by ID, breed, or health status..." onkeyup="filterAnimals()">
+                </div>
+                <div class="table-container">
+                    <table id="animalsTable" class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Breed</th>
+                                <th>Age</th>
+                                <th>Weight</th>
+                                <th>Lactation Stage</th>
+                                <th>Parity</th>
+                                <th>Milk Yield</th>
+                                <th>Health Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div id="analytics" class="tab-content">
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3><i class="fas fa-line-chart"></i> Milk Production Trend</h3>
+                    <canvas id="trendChart" width="400" height="200"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3><i class="fas fa-chart-area"></i> Feed Consumption by Type</h3>
+                    <canvas id="feedChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3><i class="fas fa-thermometer-half"></i> Temperature vs Yield Correlation</h3>
+                    <canvas id="tempChart" width="400" height="200"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3><i class="fas fa-calendar-alt"></i> Seasonal Performance</h3>
+                    <canvas id="seasonChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-cogs"></i> Performance Metrics</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">92.5%</div>
+                        <div class="stat-label">Feed Efficiency</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">87.3%</div>
+                        <div class="stat-label">Health Score</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">+12.4%</div>
+                        <div class="stat-label">Yield Improvement</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">98.1%</div>
+                        <div class="stat-label">AI Accuracy</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Tab -->
+        <div id="reports" class="tab-content">
+            <div class="card">
+                <h3><i class="fas fa-chart-area"></i> Report Generation</h3>
+                <p>Generate comprehensive reports for livestock management and analysis.</p>
+                
+                <div class="form-grid" style="margin-top: 25px;">
+                    <div class="form-group">
+                        <label for="report-type">Report Type</label>
+                        <select id="report-type" onchange="updateReportFields()">
+                            <option value="daily">Daily Summary</option>
+                            <option value="weekly">Weekly Report</option>
+                            <option value="monthly">Monthly Analysis</option>
+                            <option value="health">Health Status Report</option>
+                            <option value="production">Production Analysis</option>
+                            <option value="breed">Breed-wise Analysis</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="date-range-start">Start Date</label>
+                        <input type="date" id="date-range-start" class="form-control" 
+                               value="2025-09-07" max="2025-09-14">
+                    </div>
+                    <div class="form-group">
+                        <label for="date-range-end">End Date</label>
+                        <input type="date" id="date-range-end" class="form-control" 
+                               value="2025-09-14" max="2025-09-14">
+                    </div>
+                    <div class="form-group">
+                        <label for="export-format">Export Format</label>
+                        <select id="export-format">
+                            <option value="pdf">PDF Document</option>
+                            <option value="csv">CSV Data</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="btn-group" style="margin-top: 20px;">
+                    <button class="btn" onclick="generateReport()">
+                        <i class="fas fa-file-download"></i> Generate Report
+                    </button>
+                    <button class="btn" onclick="previewReport()">
+                        <i class="fas fa-eye"></i> Preview Report
+                    </button>
+                </div>
+
+                <!-- Report Preview Modal -->
+                <div class="modal fade" id="reportPreviewModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Report Preview</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="reportPreviewContent"></div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" onclick="generateReport()">Generate Report</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-history"></i> Recent Reports</h3>
+                <div id="recentReportsContainer" class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Report Name</th>
+                                <th>Type</th>
+                                <th>Date Range</th>
+                                <th>Generated</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentReportsBody">
+                            <!-- Will be populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+                            <tr>
+                                <td>Financial Summary - Q4 2024</td>
+                                <td>Financial</td>
+                                <td>3 days ago</td>
+                                <td>956 KB</td>
+                                <td>
+                                    <button class="btn" style="padding: 6px 12px; font-size: 0.8rem; margin-right: 5px;">
+                                        <i class="fas fa-download"></i> Download
+                                    </button>
+                                    <button class="btn" style="padding: 6px 12px; font-size: 0.8rem;">
+                                        <i class="fas fa-share"></i> Share
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables for charts
+        let healthChart = null;
+        let yieldChart = null;
+        let trendChart = null;
+        let feedChart = null;
+        let tempChart = null;
+        let seasonChart = null;
+
+        // API base URL
+        const API_BASE_URL = 'http://localhost:5000/api';
+
+        // Configure toastr
+        toastr.options = {
+    closeButton: true,
+    progressBar: true,
+    positionClass: "toast-top-right",
+    timeOut: 3000
+};
+
+        // WebSocket connection and event handlers
+        let socket;
+        let isConnected = false;
+
+        function initializeWebSocket() {
+            socket = io({
+                transports: ['websocket'],
+                reconnection: true,
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 5000,
+                reconnectionAttempts: Infinity
+            });
+
+            socket.on('connect', () => {
+                console.log('Connected to WebSocket');
+                isConnected = true;
+                toastr.success('Connected to real-time updates');
+            });
+
+            socket.on('disconnect', () => {
+                console.log('Disconnected from WebSocket');
+                isConnected = false;
+                toastr.warning('Real-time updates disconnected - retrying connection');
+            });
+
+            socket.on('animal_updated', (animal) => {
+                updateAnimalInTable(animal);
+                toastr.info(`Animal #${animal.id} data updated`);
+                updateDashboardStats();
+            });
+
+            socket.on('animal_added', (animal) => {
+                addAnimalToTable(animal);
+                toastr.success(`New animal #${animal.id} added`);
+                updateDashboardStats();
+            });
+
+            socket.on('animal_deleted', (animalId) => {
+                removeAnimalFromTable(animalId);
+                toastr.info(`Animal #${animalId} removed`);
+                updateDashboardStats();
+            });
+
+            socket.on('health_alert', (alert) => {
+                toastr.warning(alert.message, 'Health Alert');
+                updateAlerts([alert]);
+            });
+
+            socket.on('dashboard_update', (data) => {
+                updateDashboardUI(data);
+            });
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            initializeWebSocket();
+            loadDashboardData();
+            loadAnimalData();
+        });
+
+        // Load dashboard data from API
+        async function loadDashboardData() {
+            try {
+                showLoading('dashboard');
+                
+                // Fetch dashboard data
+                const response = await fetch(`${API_BASE_URL}/dashboard`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                
+                // Update dashboard statistics
+                document.getElementById('total-animals').textContent = data.total_animals || 0;
+                document.getElementById('avg-yield').textContent = data.avg_yield || 0;
+                document.getElementById('healthy-animals').textContent = data.healthy_animals || 0;
+                document.getElementById('alerts-count').textContent = data.recent_alerts ? data.recent_alerts.length : 0;
+                
+                // Update health chart
+                updateHealthChart(data.health_distribution);
+                
+                // Update yield chart
+                updateYieldChart(data.yield_by_breed);
+                
+                // Update alerts
+                updateAlerts(data.recent_alerts);
+                
+                hideLoading('dashboard');
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                hideLoading('dashboard');
+                // Fallback to mock data if API is not available
+                loadMockDashboardData();
+            }
+        }
+
+        // Load animal data from API
+        async function loadAnimalData() {
+            try {
+                showLoading('animals');
+                
+                const searchValue = document.getElementById('search-animals').value;
+                const url = searchValue ? 
+                    `${API_BASE_URL}/animals?search=${encodeURIComponent(searchValue)}` : 
+                    `${API_BASE_URL}/animals`;
+                    
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const animals = await response.json();
+                populateAnimalTable(animals);
+                
+                hideLoading('animals');
+            } catch (error) {
+                console.error('Error loading animal data:', error);
+                hideLoading('animals');
+                // Fallback to mock data if API is not available
+                loadMockAnimalData();
+            }
+        }
+
+        // Predict milk yield using API
+        async function predictYield() {
+            const formData = collectFormData();
+            if (!formData) return;
+            
+            try {
+                // Calculate contributing factors
+                const breedFactor = getBreedFactor(formData.breed);
+                const ageFactor = getAgeFactor(formData.age);
+                const envFactor = getEnvironmentFactor(formData.ambient_temperature, formData.humidity);
+
+                showLoading('predictions');
+                
+                const response = await fetch('/predict/yield', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ...formData,
+                        breedFactor,
+                        ageFactor,
+                        envFactor
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                displayPredictionResult('yield', result, {
+                    breedFactor,
+                    ageFactor,
+                    envFactor,
+                    formData
+                });
+                
+                hideLoading('predictions');
+
+                // Emit socket event for real-time updates
+                if (socket && socket.connected) {
+                    socket.emit('prediction_made', {
+                        type: 'yield',
+                        data: result
+                    });
+                }
+            } catch (error) {
+                console.error('Error predicting milk yield:', error);
+                hideLoading('predictions');
+                toastr.error('Failed to predict milk yield. Please try again later.');
+            }
+        }
+
+        // Predict health status using API
+        async function predictHealth() {
+            try {
+                const formData = collectFormData();
+                if (!formData) return;
+
+                // Get vital signs and activity status
+                const vitalSigns = getVitalSignsStatus(formData.body_temperature, formData.heart_rate);
+                const activityLevels = getActivityLevel(formData.walking_distance, formData.grazing_duration, formData.rumination_time);
+                
+                showLoading('predictions');
+                
+                const response = await fetch('/predict/health', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                displayPredictionResult('health', result, {
+                    vitalSigns,
+                    activityLevels,
+                    formData
+                });
+                
+                hideLoading('predictions');
+
+                // Emit socket event for real-time updates
+                if (socket && socket.connected) {
+                    socket.emit('prediction_made', {
+                        type: 'health',
+                        data: result
+                    });
+
+                    // If health status is concerning, send alert
+                    if (result.prediction < 0.6) {
+                        socket.emit('health_alert', {
+                            message: `Health prediction shows concerning status (${(result.prediction * 100).toFixed(1)}% health score)`,
+                            status: result.prediction < 0.4 ? 'critical' : 'warning',
+                            details: {
+                                ...formData,
+                                vitalSigns,
+                                activityLevels
+                            }
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error predicting health status:', error);
+                hideLoading('predictions');
+                toastr.error('Failed to predict health status. Please try again later.');
+            }
+        }
+
+        // Collect form data for prediction
+        function collectFormData() {
+            const formData = {
+                breed: document.getElementById('breed').value,
+                age: parseFloat(document.getElementById('age').value) || 0,
+                weight: parseFloat(document.getElementById('weight').value) || 0,
+                lactation_stage: parseInt(document.getElementById('lactation_stage').value) || 0,
+                parity: parseInt(document.getElementById('parity').value) || 0,
+                feed_type: document.getElementById('feed_type').value,
+                feed_quantity: parseFloat(document.getElementById('feed_quantity').value) || 0,
+                walking_distance: parseFloat(document.getElementById('walking_distance').value) || 0,
+                grazing_duration: parseFloat(document.getElementById('grazing_duration').value) || 0,
+                rumination_time: parseFloat(document.getElementById('rumination_time').value) || 0,
+                resting_hours: parseFloat(document.getElementById('resting_hours').value) || 0,
+                body_temperature: parseFloat(document.getElementById('body_temperature').value) || 38.5,
+                heart_rate: parseFloat(document.getElementById('heart_rate').value) || 65,
+                ambient_temperature: parseFloat(document.getElementById('ambient_temperature').value) || 25,
+                humidity: parseFloat(document.getElementById('humidity').value) || 60,
+                season: document.getElementById('season').value || 'Spring'
+            };
+
+            // Validate required fields
+            const requiredFields = {
+                age: { min: 1, max: 15 },
+                weight: { min: 300, max: 900 },
+                lactation_stage: { min: 1, max: 10 },
+                parity: { min: 1, max: 8 },
+                body_temperature: { min: 37, max: 41 },
+                heart_rate: { min: 50, max: 100 }
+            };
+
+            let validationErrors = [];
+            for (const [field, range] of Object.entries(requiredFields)) {
+                if (formData[field] < range.min || formData[field] > range.max) {
+                    validationErrors.push(`${field.replace('_', ' ')} must be between ${range.min} and ${range.max}`);
+                }
+            }
+
+            if (validationErrors.length > 0) {
+                throw new Error('Validation failed:\n' + validationErrors.join('\n'));
+            }
+
+            return formData;
+        }
+
+        // Display prediction results
+        function displayPredictionResult(type, result, factors) {
+            const resultsDiv = document.getElementById('prediction-results');
+
+            if (type === 'yield') {
+                const { breedFactor, ageFactor, envFactor, formData } = factors;
+                
+                resultsDiv.innerHTML = `
+                    <div class="prediction-result">
+                        <h3><i class="fas fa-chart-line"></i> Milk Yield Prediction</h3>
+                        <div class="text-center">
+                            <div class="stat-number">${result.prediction.toFixed(2)} Liters</div>
+                            <p class="mb-4">Predicted Daily Milk Yield</p>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="fas fa-cow"></i> Breed Factor</h5>
+                                        <p class="card-text">${(breedFactor * 100).toFixed(1)}%</p>
+                                        <small class="text-muted">Based on ${formData.breed}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="fas fa-birthday-cake"></i> Age Factor</h5>
+                                        <p class="card-text">${(ageFactor * 100).toFixed(1)}%</p>
+                                        <small class="text-muted">${formData.age} years old</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="fas fa-thermometer-half"></i> Environment</h5>
+                                        <p class="card-text">${(envFactor * 100).toFixed(1)}%</p>
+                                        <small class="text-muted">${formData.ambient_temperature}°C, ${formData.humidity}%</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-primary" role="progressbar" 
+                                     style="width: ${result.confidence * 100}%" 
+                                     aria-valuenow="${result.confidence * 100}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                            <div class="text-center mt-2">
+                                <small class="text-muted">Model Confidence: ${(result.confidence * 100).toFixed(1)}%</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'health') {
+                const { vitalSigns, activityLevels, formData } = factors;
+                
+                // Determine health status and color
+                let status, statusClass;
+                if (result.prediction >= 0.8) {
+                    status = "Excellent";
+                    statusClass = "success";
+                } else if (result.prediction >= 0.6) {
+                    status = "Good";
+                    statusClass = "info";
+                } else if (result.prediction >= 0.4) {
+                    status = "Fair";
+                    statusClass = "warning";
+                } else {
+                    status = "Poor";
+                    statusClass = "danger";
+                }
+                
+                resultsDiv.innerHTML = `
+                    <div class="prediction-result">
+                        <div class="card mb-4">
+                            <div class="card-header bg-${statusClass} text-white">
+                                <h5 class="mb-0"><i class="fas fa-heartbeat"></i> Health Status Prediction</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="text-center mb-4">
+                                    <h4>Health Score: ${(result.prediction * 100).toFixed(1)}%</h4>
+                                    <span class="badge bg-${statusClass} p-2">${status}</span>
+                                </div>
+                                
+                                <h5 class="mb-3">Vital Signs</h5>
+                                <div class="row mb-4">
+                                    ${vitalSigns.map(vital => `
+                                        <div class="col-md-6">
+                                            <div class="card bg-light">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">
+                                                        <i class="fas fa-${vital.icon} text-${vital.status}"></i>
+                                                        ${vital.label}
+                                                    </h6>
+                                                    <p class="card-text">${vital.value}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                
+                                <h5 class="mb-3">Activity Levels</h5>
+                                <div class="row mb-4">
+                                    ${activityLevels.map(activity => `
+                                        <div class="col-md-4">
+                                            <div class="card bg-light">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">
+                                                        <i class="fas fa-${activity.icon} text-${activity.status}"></i>
+                                                        ${activity.label}
+                                                    </h6>
+                                                    <p class="card-text">${activity.value}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                
+                                <h5 class="mb-3">Recommendations</h5>
+                                <div class="alert bg-light">
+                                    <ul class="list-unstyled mb-0">
+                                        ${generateHealthRecommendations(result.prediction)}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Helper functions for predictions
+        function getBreedFactor(breed) {
+            const breedFactors = {
+                'Holstein': 0.95,
+                'Jersey': 0.85,
+                'Guernsey': 0.90,
+                'Sahiwal': 0.80
+            };
+            return breedFactors[breed] || 0.80;
+        }
+
+        function getAgeFactor(age) {
+            // Peak production age is around 5-7 years
+            if (age >= 5 && age <= 7) return 1.0;
+            if (age < 5) return 0.8 + (age * 0.04);
+            return 1.0 - ((age - 7) * 0.05);
+        }
+
+        function getEnvironmentFactor(temperature, humidity) {
+            // Optimal conditions: temp 18-22°C, humidity 40-60%
+            let tempFactor = 1.0 - (Math.abs(20 - temperature) * 0.02);
+            let humidityFactor = 1.0 - (Math.abs(50 - humidity) * 0.005);
+            return Math.min(1.0, (tempFactor + humidityFactor) / 2);
+        }
+
+        function getVitalSignsStatus(temperature, heartRate) {
+            return [
+                {
+                    label: 'Body Temperature',
+                    value: `${temperature}°C`,
+                    icon: 'thermometer-half',
+                    status: (temperature >= 38.0 && temperature <= 39.0) ? 'success' : 
+                            (temperature < 38.0 || temperature > 39.5) ? 'danger' : 'warning'
+                },
+                {
+                    label: 'Heart Rate',
+                    value: `${heartRate} BPM`,
+                    icon: 'heartbeat',
+                    status: (heartRate >= 60 && heartRate <= 70) ? 'success' :
+                            (heartRate < 50 || heartRate > 80) ? 'danger' : 'warning'
+                }
+            ];
+        }
+
+        function getActivityLevel(walking, grazing, rumination) {
+            return [
+                {
+                    label: 'Walking Distance',
+                    value: `${walking} km`,
+                    icon: 'walking',
+                    status: (walking >= 2 && walking <= 4) ? 'success' :
+                            (walking < 1 || walking > 5) ? 'warning' : 'info'
+                },
+                {
+                    label: 'Grazing Time',
+                    value: `${grazing} hrs`,
+                    icon: 'clock',
+                    status: (grazing >= 5 && grazing <= 8) ? 'success' :
+                            (grazing < 4 || grazing > 9) ? 'warning' : 'info'
+                },
+                {
+                    label: 'Rumination',
+                    value: `${rumination} hrs`,
+                    icon: 'stopwatch',
+                    status: (rumination >= 7 && rumination <= 9) ? 'success' :
+                            (rumination < 6 || rumination > 10) ? 'warning' : 'info'
+                }
+            ];
+        }
+
+        // Generate health recommendations based on prediction score
+        function generateHealthRecommendations(score) {
+            if (score >= 0.8) {
+                return `
+                    <li><i class="fas fa-check-circle text-success"></i> Continue current feeding and management practices</li>
+                    <li><i class="fas fa-chart-line text-success"></i> Monitor health indicators regularly</li>
+                    <li><i class="fas fa-running text-success"></i> Maintain current exercise regimen</li>
+                    <li><i class="fas fa-clipboard-check text-success"></i> Schedule routine health check-up</li>
+                `;
+            } else if (score >= 0.6) {
+                return `
+                    <li><i class="fas fa-utensils text-info"></i> Consider increasing feed quality slightly</li>
+                    <li><i class="fas fa-eye text-info"></i> Monitor for any signs of health decline</li>
+                    <li><i class="fas fa-bed text-info"></i> Ensure adequate resting time</li>
+                    <li><i class="fas fa-notes-medical text-info"></i> Review vaccination schedule</li>
+                `;
+            } else if (score >= 0.4) {
+                return `
+                    <li><i class="fas fa-user-md text-warning"></i> Consult with a veterinarian for health assessment</li>
+                    <li><i class="fas fa-apple-alt text-warning"></i> Improve feed quality and quantity</li>
+                    <li><i class="fas fa-moon text-warning"></i> Increase resting time and reduce stress</li>
+                    <li><i class="fas fa-thermometer-half text-warning"></i> Consider environmental adjustments</li>
+                    <li><i class="fas fa-pills text-warning"></i> Review medication requirements</li>
+                `;
+            } else {
+                return `
+                    <li><i class="fas fa-ambulance text-danger"></i> Immediate veterinary attention recommended</li>
+                    <li><i class="fas fa-exclamation-triangle text-danger"></i> Review and improve all aspects of care</li>
+                    <li><i class="fas fa-shield-alt text-danger"></i> Consider isolation to prevent disease spread</li>
+                    <li><i class="fas fa-syringe text-danger"></i> Implement supportive care and nutrition</li>
+                    <li><i class="fas fa-file-medical text-danger"></i> Start detailed health monitoring log</li>
+                `;
+            }
+        }
+
+        // Initialize charts with empty data
+        function initializeCharts() {
+            // Health status chart
+            const healthCtx = document.getElementById('healthChart').getContext('2d');
+            healthChart = new Chart(healthCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Excellent', 'Good', 'Fair', 'Poor'],
+                    datasets: [{
+                        data: [0, 0, 0, 0],
+                        backgroundColor: ['#4CAF50', '#8BC34A', '#FFC107', '#F44336']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Milk yield by breed chart
+            const yieldCtx = document.getElementById('yieldChart').getContext('2d');
+            yieldChart = new Chart(yieldCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Holstein', 'Jersey', 'Guernsey', 'Sahiwal'],
+                    datasets: [{
+                        label: 'Average Yield (L)',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: '#2196F3'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Other charts would be initialized similarly
+            initTrendChart();
+            initFeedChart();
+            initTempChart();
+            initSeasonChart();
+        }
+// Add these variables after your existing chart initializations
+let reportHealthChart = new Chart(document.getElementById('reportHealthChart'), {
+    type: 'pie',
+    data: {
+        labels: ['Excellent', 'Good', 'Fair', 'Poor'],
+        datasets: [{
+            data: [0, 0, 0, 0],
+            backgroundColor: ['#28a745', '#17a2b8', '#ffc107', '#dc3545']
+        }]
+    }
+});
+
+// Add these functions to handle new animal creation
+function showAddAnimalModal() {
+    new bootstrap.Modal(document.getElementById('addAnimalModal')).show();
+}
+
+async function createNewAnimal() {
+    const animalData = {
+        breed: document.getElementById('newBreed').value,
+        age: parseFloat(document.getElementById('newAge').value),
+        weight: parseFloat(document.getElementById('newWeight').value),
+        lactation_stage: parseInt(document.getElementById('newLactationStage').value),
+        parity: parseInt(document.getElementById('newParity').value),
+        milk_yield: parseFloat(document.getElementById('newMilkYield').value),
+        health_status: document.getElementById('newHealthStatus').value
+    };
+
+    try {
+        const response = await fetch('/animals', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(animalData)
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to create animal');
+        }
+
+        const data = await response.json();
+        toastr.success('New animal added successfully');
+        
+        // Close modal and reset form
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addAnimalModal'));
+        if (modal) {
+            modal.hide();
+        }
+        document.getElementById('addAnimalForm').reset();
+        
+        // Update UI
+        if (socket && socket.connected) {
+            // WebSocket will handle the update
+            socket.emit('animal_added', data);
+        } else {
+            // Fallback to manual update
+            addAnimalToTable(data);
+            loadDashboardData();
+        }
+    } catch (error) {
+        console.error('Error creating animal:', error);
+        toastr.error('Error creating animal: ' + error.message);
+    }
+}
+
+// Add these functions to handle sales reports
+async function generateSalesReport() {
+    const startDate = document.getElementById('reportStartDate').value;
+    const endDate = document.getElementById('reportEndDate').value;
+
+    if (!startDate || !endDate) {
+        toastr.warning('Please select both start and end dates');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/reports/sales?start_date=${startDate}&end_date=${endDate}`);
+        if (!response.ok) {
+            throw new Error('Failed to generate report');
+        }
+
+        const data = await response.json();
+        displaySalesReport(data);
+    } catch (error) {
+        toastr.error('Error generating report: ' + error.message);
+    }
+}
+
+function displaySalesReport(data) {
+    document.getElementById('salesReportContent').classList.remove('d-none');
+    document.getElementById('noReportMessage').classList.add('d-none');
+    
+    document.getElementById('totalRevenue').textContent = `₹${data.total_revenue.toLocaleString()}`;
+
+    const tbody = document.querySelector('#milkProductionTable tbody');
+    tbody.innerHTML = '';
+    data.milk_production.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${item.breed}</td>
+            <td>${item.cow_count}</td>
+            <td>${item.avg_yield.toFixed(1)} L/day</td>
+            <td>${item.total_yield.toFixed(1)} L</td>
+            <td>₹${item.revenue.toLocaleString()}</td>
+        `;
+        tbody.appendChild(row);
+    });
+
+    reportHealthChart.data.datasets[0].data = [
+        data.health_statistics.Excellent || 0,
+        data.health_statistics.Good || 0,
+        data.health_statistics.Fair || 0,
+        data.health_statistics.Poor || 0
+    ];
+    reportHealthChart.update();
+}
+        // Initialize trend chart
+        function initTrendChart() {
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            trendChart = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Milk Yield (L)',
+                        data: [22, 24, 26, 25, 28, 30],
+                        borderColor: '#2196F3',
+                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize feed chart
+        function initFeedChart() {
+            const feedCtx = document.getElementById('feedChart').getContext('2d');
+            feedChart = new Chart(feedCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Green Fodder', 'Dry Fodder', 'Concentrates', 'Mixed'],
+                    datasets: [{
+                        data: [40, 25, 20, 15],
+                        backgroundColor: ['#4CAF50', '#FFC107', '#2196F3', '#9C27B0']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize temperature chart
+        function initTempChart() {
+            const tempCtx = document.getElementById('tempChart').getContext('2d');
+            tempChart = new Chart(tempCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Temperature vs Yield',
+                        data: [
+                            {x: 15, y: 18}, {x: 18, y: 20}, {x: 20, y: 22}, 
+                            {x: 22, y: 24}, {x: 25, y: 26}, {x: 28, y: 25},
+                            {x: 30, y: 23}, {x: 32, y: 21}, {x: 35, y: 19}
+                        ],
+                        backgroundColor: '#2196F3'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Temperature (°C)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Milk Yield (L)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize season chart
+        function initSeasonChart() {
+            const seasonCtx = document.getElementById('seasonChart').getContext('2d');
+            seasonChart = new Chart(seasonCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Spring', 'Summer', 'Fall', 'Winter'],
+                    datasets: [{
+                        label: 'Average Yield (L)',
+                        data: [26, 22, 24, 20],
+                        backgroundColor: '#4CAF50'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update health chart with data
+        function updateHealthChart(data) {
+            if (healthChart && data) {
+                healthChart.data.datasets[0].data = [
+                    data.Excellent || 0,
+                    data.Good || 0,
+                    data.Fair || 0,
+                    data.Poor || 0
+                ];
+                healthChart.update();
+            }
+        }
+
+        // Update yield chart with data
+        function updateYieldChart(data) {
+            if (yieldChart && data) {
+                yieldChart.data.datasets[0].data = [
+                    data.Holstein || 0,
+                    data.Jersey || 0,
+                    data.Guernsey || 0,
+                    data.Sahiwal || 0
+                ];
+                yieldChart.update();
+            }
+        }
+
+        // Update alerts container
+        function updateAlerts(alerts) {
+            const container = document.getElementById('alerts-container');
+            if (!alerts || alerts.length === 0) {
+                container.innerHTML = '<div class="alert-item">No active alerts</div>';
+                return;
+            }
+
+            let html = '';
+            alerts.forEach(alert => {
+                let priorityClass = 'alert-medium';
+                if (alert.priority === 'high') priorityClass = 'alert-high';
+                else if (alert.priority === 'low') priorityClass = 'alert-low';
+                
+                html += `
+                    <div class="alert ${priorityClass}">
+                        <i class="fas ${getAlertIcon(alert.type)}"></i>
+                        <div>
+                            <strong>${alert.title}</strong>
+                            <p>${alert.description}</p>
+                            <small>${alert.time}</small>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // Get appropriate icon for alert type
+        function getAlertIcon(type) {
+            switch(type) {
+                case 'health': return 'fa-heartbeat';
+                case 'feed': return 'fa-utensils';
+                case 'environment': return 'fa-temperature-high';
+                case 'production': return 'fa-tint';
+                default: return 'fa-exclamation-triangle';
+            }
+        }
+
+        // Populate animal table with data
+        function populateAnimalTable(animals) {
+            const tbody = document.getElementById('animals-tbody');
+            if (!animals || animals.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No animal records found</td></tr>';
+                return;
+            }
+
+            let html = '';
+            animals.forEach(animal => {
+                // Determine health status class
+                let healthClass;
+                if (animal.health_status === 'Excellent') healthClass = 'health-healthy';
+                else if (animal.health_status === 'Good') healthClass = 'health-healthy';
+                else if (animal.health_status === 'Fair') healthClass = 'health-at-risk';
+                else healthClass = 'health-sick';
+                
+                html += `
+                    <tr>
+                        <td>${animal.id}</td>
+                        <td>${animal.breed}</td>
+                        <td>${animal.age} yrs</td>
+                        <td>${animal.weight} kg</td>
+                        <td>${animal.milk_yield} L</td>
+                        <td><span class="health-badge ${healthClass}">${animal.health_status}</span></td>
+                        <td>${animal.last_updated}</td>
+                        <td>
+                            <button class="btn" style="padding: 6px 12px; font-size: 0.8rem;">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // Filter animals based on search input
+        function filterAnimals() {
+            loadAnimalData();
+        }
+
+        // Show/hide tabs
+        function showTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.nav-tab').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabId).classList.add('active');
+            
+            // Activate clicked button
+            event.currentTarget.classList.add('active');
+            
+            // Load data if needed
+            if (tabId === 'dashboard') {
+                loadDashboardData();
+            } else if (tabId === 'animals') {
+                loadAnimalData();
+            }
+        }
+
+        // Show loading state
+        function showLoading(section) {
+            const loader = document.getElementById(`${section}-loader`);
+            if (loader) {
+                loader.style.display = 'flex';
+            }
+        }
+
+        // Hide loading state
+        function hideLoading(section) {
+            const loader = document.getElementById(`${section}-loader`);
+            if (loader) {
+                loader.style.display = 'none';
+            }
+        }
+
+        // Clear form inputs
+        function clearForm() {
+            document.querySelectorAll('#predictions input, #predictions select').forEach(input => {
+                if (input.id === 'breed') input.value = 'Holstein';
+                else if (input.id === 'age') input.value = '5';
+                else if (input.id === 'weight') input.value = '500';
+                else if (input.id === 'lactation_stage') input.value = '3';
+                else if (input.id === 'parity') input.value = '2';
+                else if (input.id === 'feed_type') input.value = 'Green Fodder';
+                else if (input.id === 'feed_quantity') input.value = '25';
+                else if (input.id === 'walking_distance') input.value = '3';
+                else if (input.id === 'grazing_duration') input.value = '6';
+                else if (input.id === 'rumination_time') input.value = '8';
+                else if (input.id === 'resting_hours') input.value = '8';
+                else if (input.id === 'body_temperature') input.value = '38.5';
+                else if (input.id === 'heart_rate') input.value = '65';
+                else if (input.id === 'ambient_temperature') input.value = '25';
+                else if (input.id === 'humidity') input.value = '60';
+                else if (input.id === 'season') input.value = 'Spring';
+            });
+            
+            document.getElementById('prediction-results').innerHTML = '';
+        }
+
+        // Generate report (placeholder)
+        function generateReport() {
+            alert('Report generation functionality would be implemented here.');
+        }
+
+        // Preview report (placeholder)
+        function previewReport() {
+            alert('Report preview functionality would be implemented here.');
+        }
+
+        // Schedule report (placeholder)
+        function scheduleReport() {
+            alert('Report scheduling functionality would be implemented here.');
+        }
+
+        // Mock data functions (fallback if API is not available)
+        function loadMockDashboardData() {
+            document.getElementById('total-animals').textContent = '42';
+            document.getElementById('avg-yield').textContent = '22.5';
+            document.getElementById('healthy-animals').textContent = '35';
+            document.getElementById('alerts-count').textContent = '3';
+            
+            updateHealthChart({
+                Excellent: 15,
+                Good: 20,
+                Fair: 5,
+                Poor: 2
+            });
+            
+            updateYieldChart({
+                Holstein: 28.5,
+                Jersey: 22.3,
+                Guernsey: 25.1,
+                Sahiwal: 18.7
+            });
+            
+            updateAlerts([
+                {
+                    title: 'Low Feed Stock',
+                    description: 'Green fodder stock is below recommended levels',
+                    type: 'feed',
+                    priority: 'medium',
+                    time: '2 hours ago'
+                },
+                {
+                    title: 'Temperature Alert',
+                    description: 'Barn temperature has exceeded optimal range',
+                    type: 'environment',
+                    priority: 'high',
+                    time: '45 minutes ago'
+                },
+                {
+                    title: 'Health Check Due',
+                    description: 'Scheduled health check for animal #C-1024',
+                    type: 'health',
+                    priority: 'low',
+                    time: '5 hours ago'
+                }
+            ]);
+        }
+
+        function loadMockAnimalData() {
+            const mockAnimals = [
+                {id: 1, breed: 'Holstein', age: 4.5, weight: 650, milk_yield: 28.5, health_status: 'Excellent', last_updated: '2024-12-01'},
+                {id: 2, breed: 'Jersey', age: 5.2, weight: 450, milk_yield: 22.3, health_status: 'Good', last_updated: '2024-12-01'},
+                {id: 3, breed: 'Sahiwal', age: 6.1, weight: 425, milk_yield: 18.7, health_status: 'Fair', last_updated: '2024-11-30'},
+                {id: 4, breed: 'Holstein', age: 3.8, weight: 600, milk_yield: 26.2, health_status: 'Excellent', last_updated: '2024-12-01'},
+                {id: 5, breed: 'Guernsey', age: 7.2, weight: 500, milk_yield: 25.1, health_status: 'Good', last_updated: '2024-11-29'},
+                {id: 6, breed: 'Jersey', age: 4.3, weight: 430, milk_yield: 21.8, health_status: 'Good', last_updated: '2024-11-30'},
+                {id: 7, breed: 'Holstein', age: 5.5, weight: 620, milk_yield: 27.4, health_status: 'Excellent', last_updated: '2024-12-01'},
+                {id: 8, breed: 'Sahiwal', age: 8.1, weight: 410, milk_yield: 17.9, health_status: 'Poor', last_updated: '2024-11-28'}
+            ];
+            
+            populateAnimalTable(mockAnimals);
+        }
+
+        // Socket event handlers moved to initializeWebSocket()
+
+socket.on('disconnect', () => {
+    console.log('Disconnected from WebSocket');
+    toastr.warning('Real-time updates disabled - falling back to polling');
+});
+
+// Listen for real-time updates
+socket.on('animal_updated', (animal) => {
+    // Update the animal in the table
+    updateAnimalInTable(animal);
+    toastr.info(`Animal #${animal.id} has been updated`);
+});
+
+socket.on('health_alert', (alert) => {
+    toastr.warning(alert.message, 'Health Alert');
+});
+
+// Update a single animal in the table
+function updateAnimalInTable(animal) {
+    const row = document.querySelector(`#animals-tbody tr td:first-child:contains('${animal.id}')`).parentElement;
+    if (row) {
+        row.innerHTML = `
+            <td>${animal.id}</td>
+            <td>${animal.breed}</td>
+            <td>${animal.age}</td>
+            <td>${animal.weight}</td>
+            <td>${animal.lactation_stage}</td>
+            <td>${animal.parity}</td>
+            <td>${animal.milk_yield}</td>
+            <td><span class="badge bg-${getHealthStatusClass(animal.health_status)}">${animal.health_status}</span></td>
+            <td>${animal.last_updated}</td>
+            <td>
+                <button class="btn btn-sm btn-primary" onclick='editAnimal(${JSON.stringify(animal)})'>
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="btn btn-sm btn-info" onclick='showAnimalDetails(${JSON.stringify(animal)})'>
+                    <i class="fas fa-info-circle"></i> Details
+                </button>
+            </td>
+        `;
+    }
+}
+
+// Save animal edits
+async function saveAnimalEdit() {
+    const animalData = {
+        id: parseInt(document.getElementById('editAnimalId').value),
+        weight: parseFloat(document.getElementById('editWeight').value),
+        milk_yield: parseFloat(document.getElementById('editMilkYield').value),
+        health_status: document.getElementById('editHealthStatus').value
+    };
+
+    try {
+        const response = await fetch('/api/animals/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(animalData)
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update animal');
+        }
+
+        const data = await response.json();
+        toastr.success('Animal updated successfully');
+        bootstrap.Modal.getInstance(document.getElementById('editAnimalModal')).hide();
+        
+        if (!socket.connected) {
+            loadDashboardData();
+            loadAnimalData();
+        }
+    } catch (error) {
+        toastr.error('Error updating animal: ' + error.message);
+    }
+}
+
+// Export data to CSV/PDF
+function exportAnimalData(format) {
+    const animals = Array.from(document.querySelectorAll('#animals-tbody tr')).map(row => {
+        const cells = row.cells;
+        return {
+            id: cells[0].textContent,
+            breed: cells[1].textContent,
+            age: cells[2].textContent,
+            weight: cells[3].textContent,
+            lactation_stage: cells[4].textContent,
+            parity: cells[5].textContent,
+            milk_yield: cells[6].textContent,
+            health_status: cells[7].textContent,
+            last_updated: cells[8].textContent
+        };
+    });
+
+    if (format === 'csv') {
+        const headers = ['ID', 'Breed', 'Age', 'Weight', 'Lactation Stage', 'Parity', 'Milk Yield', 'Health Status', 'Last Updated'];
+        const csvContent = [
+            headers.join(','),
+            ...animals.map(animal => Object.values(animal).join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'cattle_data.csv';
+        link.click();
+    } else if (format === 'pdf') {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        doc.text('Cattle Management System - Report', 14, 15);
+        doc.autoTable({
+            head: [['ID', 'Breed', 'Age', 'Weight', 'Milk Yield', 'Health', 'Updated']],
+            body: animals.map(animal => [
+                animal.id,
+                animal.breed,
+                animal.age,
+                animal.weight,
+                animal.milk_yield,
+                animal.health_status,
+                animal.last_updated
+            ])
+        });
+        
+        doc.save('cattle_report.pdf');
+    }
+}
+function getHealthStatusClass(status) {
+    switch (status) {
+        case 'Excellent': return 'success';
+        case 'Good': return 'info';
+        case 'Fair': return 'warning';
+        case 'Poor': return 'danger';
+        default: return 'secondary';
+    }
+}
+
+// Report Generation Functions
+function updateReportFields() {
+    const reportType = document.getElementById('report-type').value;
+    const today = new Date();
+    const startDateInput = document.getElementById('date-range-start');
+    
+    switch(reportType) {
+        case 'daily':
+            startDateInput.value = today.toISOString().split('T')[0];
+            break;
+        case 'weekly':
+            const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+            startDateInput.value = lastWeek.toISOString().split('T')[0];
+            break;
+        case 'monthly':
+            const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+            startDateInput.value = lastMonth.toISOString().split('T')[0];
+            break;
+    }
+}
+
+async function generateReport() {
+    const reportType = document.getElementById('report-type').value;
+    const startDate = document.getElementById('date-range-start').value;
+    const endDate = document.getElementById('date-range-end').value;
+    const format = document.getElementById('export-format').value;
+
+    try {
+        // First, fetch the animals data
+        const response = await fetch('/animals');
+        if (!response.ok) {
+            throw new Error('Failed to fetch animal data');
+        }
+        const animals = await response.json();
+
+        // Filter animals based on date range if needed
+        const filteredAnimals = animals;
+        
+        if (format === 'csv') {
+            generateCSVReport(filteredAnimals, reportType, startDate, endDate);
+        } else {
+            generatePDFReport(filteredAnimals, reportType, startDate, endDate);
+        }
+
+        toastr.success('Report generated successfully');
+    } catch (error) {
+        console.error('Error generating report:', error);
+        toastr.error('Failed to generate report');
+    }
+}
+
+function generateCSVReport(animals, reportType, startDate, endDate) {
+    let csvContent = '';
+    const headers = ['ID', 'Breed', 'Age', 'Weight', 'Lactation Stage', 'Parity', 'Milk Yield', 'Health Status'];
+    csvContent += headers.join(',') + '\\n';
+
+    animals.forEach(animal => {
+        const row = [
+            animal.id,
+            animal.breed,
+            animal.age,
+            animal.weight,
+            animal.lactation_stage,
+            animal.parity,
+            animal.milk_yield,
+            animal.health_status
+        ];
+        csvContent += row.join(',') + '\\n';
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cattle_report_${reportType}_${startDate}_${endDate}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    a.remove();
+}
+
+function generatePDFReport(animals, reportType, startDate, endDate) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Add header
+    doc.setFontSize(18);
+    doc.text('Cattle Management System', 105, 15, { align: 'center' });
+    doc.setFontSize(14);
+    doc.text(`${reportType.toUpperCase()} REPORT`, 105, 25, { align: 'center' });
+    doc.setFontSize(12);
+    doc.text(`Period: ${formatDate(startDate)} to ${formatDate(endDate)}`, 105, 35, { align: 'center' });
+
+    // Add summary statistics
+    let yPos = 50;
+    const stats = calculateStatistics(animals);
+    doc.setFontSize(14);
+    doc.text('Summary Statistics', 14, yPos);
+    yPos += 10;
+    doc.setFontSize(12);
+    doc.text(`Total Animals: ${stats.totalAnimals}`, 14, yPos);
+    yPos += 8;
+    doc.text(`Average Milk Yield: ${stats.avgMilkYield.toFixed(2)} L/day`, 14, yPos);
+    yPos += 8;
+    doc.text(`Healthy Animals: ${stats.healthyCount}`, 14, yPos);
+    yPos += 8;
+    doc.text(`Total Milk Production: ${stats.totalMilkYield.toFixed(2)} L/day`, 14, yPos);
+    yPos += 15;
+
+    // Add animals table
+    doc.autoTable({
+        startY: yPos,
+        head: [['ID', 'Breed', 'Age', 'Weight', 'Milk Yield', 'Health']],
+        body: animals.map(animal => [
+            animal.id,
+            animal.breed,
+            `${animal.age} yrs`,
+            `${animal.weight} kg`,
+            `${animal.milk_yield} L`,
+            animal.health_status
+        ]),
+        theme: 'grid'
+    });
+
+    // Add footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for(let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(10);
+        doc.text(`Page ${i} of ${pageCount}`, 105, doc.internal.pageSize.height - 10, { align: 'center' });
+    }
+
+    doc.save(`cattle_report_${reportType}_${startDate}_${endDate}.pdf`);
+}
+
+function calculateStatistics(animals) {
+    return {
+        totalAnimals: animals.length,
+        avgMilkYield: animals.reduce((sum, a) => sum + a.milk_yield, 0) / animals.length,
+        healthyCount: animals.filter(a => ['Excellent', 'Good'].includes(a.health_status)).length,
+        totalMilkYield: animals.reduce((sum, a) => sum + a.milk_yield, 0)
+    };
+}
+
+async function previewReport() {
+    const reportType = document.getElementById('report-type').value;
+    const startDate = document.getElementById('date-range-start').value;
+    const endDate = document.getElementById('date-range-end').value;
+
+    try {
+        // Fetch animals data
+        const response = await fetch('/animals');
+        if (!response.ok) {
+            throw new Error('Failed to fetch animal data');
+        }
+        const animals = await response.json();
+
+        // Calculate statistics
+        const stats = calculateStatistics(animals);
+        const breedStats = calculateBreedStatistics(animals);
+
+        // Generate preview HTML
+        let previewHtml = `
+            <div class="report-preview">
+                <div class="preview-header">
+                    <h4>${reportType} Report</h4>
+                    <p class="text-muted">Period: ${formatDate(startDate)} to ${formatDate(endDate)}</p>
+                </div>
+                
+                <div class="preview-summary">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Summary Statistics</h5>
+                            <ul class="list-unstyled">
+                                <li>Total Animals: ${stats.totalAnimals}</li>
+                                <li>Average Milk Yield: ${stats.avgMilkYield.toFixed(2)} L/day</li>
+                                <li>Healthy Animals: ${stats.healthyCount}</li>
+                                <li>Total Milk Production: ${stats.totalMilkYield.toFixed(2)} L/day</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Breed Distribution</h5>
+                            <ul class="list-unstyled">
+                                ${Object.entries(breedStats).map(([breed, count]) => 
+                                    `<li>${breed}: ${count} animals</li>`
+                                ).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="preview-table">
+                    <h5>Sample Data Preview (First 5 Records)</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Breed</th>
+                                    <th>Age</th>
+                                    <th>Weight</th>
+                                    <th>Milk Yield</th>
+                                    <th>Health</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${animals.slice(0, 5).map(animal => `
+                                    <tr>
+                                        <td>${animal.id}</td>
+                                        <td>${animal.breed}</td>
+                                        <td>${animal.age} yrs</td>
+                                        <td>${animal.weight} kg</td>
+                                        <td>${animal.milk_yield} L</td>
+                                        <td><span class="badge bg-${getHealthStatusClass(animal.health_status)}">${animal.health_status}</span></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="preview-footer mt-3">
+                    <p class="text-muted">
+                        <small>Full report will contain complete data and detailed analytics.</small>
+                    </p>
+                </div>
+            </div>
+        `;
+
+        // Show preview modal
+        const previewContent = document.getElementById('reportPreviewContent');
+        previewContent.innerHTML = previewHtml;
+        new bootstrap.Modal(document.getElementById('reportPreviewModal')).show();
+    } catch (error) {
+        console.error('Error previewing report:', error);
+        toastr.error('Failed to preview report');
+    }
+}
+
+function calculateBreedStatistics(animals) {
+    return animals.reduce((stats, animal) => {
+        stats[animal.breed] = (stats[animal.breed] || 0) + 1;
+        return stats;
+    }, {});
+}
+
+function generatePDFReport(data, reportType, startDate, endDate) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Add header
+    doc.setFontSize(18);
+    doc.text('Cattle Management System', 105, 15, { align: 'center' });
+    doc.setFontSize(14);
+    doc.text(`${reportType.toUpperCase()} REPORT`, 105, 25, { align: 'center' });
+    doc.setFontSize(12);
+    doc.text(`Period: ${formatDate(startDate)} to ${formatDate(endDate)}`, 105, 35, { align: 'center' });
+
+    // Add content based on report type
+    let yPos = 50;
+    switch(reportType) {
+        case 'production':
+            yPos = addProductionSection(doc, data, yPos);
+            break;
+        case 'health':
+            yPos = addHealthSection(doc, data, yPos);
+            break;
+        case 'breed':
+            yPos = addBreedSection(doc, data, yPos);
+            break;
+        default:
+            yPos = addGeneralSection(doc, data, yPos);
+    }
+
+    // Add footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for(let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(10);
+        doc.text(`Page ${i} of ${pageCount}`, 105, doc.internal.pageSize.height - 10, { align: 'center' });
+    }
+
+    doc.save(`${reportType}_report_${startDate}_${endDate}.pdf`);
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+    });
+}
+
+async function updateRecentReports() {
+    try {
+        const response = await fetch('/api/reports/recent');
+        if (!response.ok) throw new Error('Failed to fetch recent reports');
+        
+        const reports = await response.json();
+        const tbody = document.getElementById('recentReportsBody');
+        tbody.innerHTML = '';
+
+        reports.forEach(report => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${report.name}</td>
+                <td>${report.type}</td>
+                <td>${formatDate(report.startDate)} - ${formatDate(report.endDate)}</td>
+                <td>${formatTimeAgo(report.generatedAt)}</td>
+                <td>
+                    <button class="btn btn-sm" onclick="downloadReport('${report.id}')">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (error) {
+        console.error('Error updating recent reports:', error);
+    }
+}
+
+function formatTimeAgo(timestamp) {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+
+    if (seconds < 60) return 'just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} minutes ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hours ago`;
+    const days = Math.floor(hours / 24);
+    if (days === 1) return 'yesterday';
+    return `${days} days ago`;
+}
+
+// Real-time update helper functions
+function updateAnimalInTable(animal) {
+    const tbody = document.querySelector('#animalsTable tbody');
+    const existingRow = tbody.querySelector(`tr[data-animal-id="${animal.id}"]`);
+    
+    const row = document.createElement('tr');
+    row.setAttribute('data-animal-id', animal.id);
+    row.innerHTML = `
+        <td>${animal.id}</td>
+        <td>${animal.breed}</td>
+        <td>${animal.age}</td>
+        <td>${animal.weight}</td>
+        <td>${animal.lactation_stage}</td>
+        <td>${animal.parity}</td>
+        <td>${animal.milk_yield}</td>
+        <td><span class="badge bg-${getHealthStatusClass(animal.health_status)}">${animal.health_status}</span></td>
+        <td>
+            <button class="btn btn-sm" onclick="openEditAnimalModal(${animal.id})">
+                <i class="fas fa-edit"></i> Edit
+            </button>
+            <button class="btn btn-sm" onclick="deleteAnimal(${animal.id})">
+                <i class="fas fa-trash"></i> Delete
+            </button>
+        </td>
+    `;
+
+    if (existingRow) {
+        existingRow.replaceWith(row);
+    } else {
+        tbody.appendChild(row);
+    }
+}
+
+function addAnimalToTable(animal) {
+    const tbody = document.querySelector('#animalsTable tbody');
+    const row = document.createElement('tr');
+    row.setAttribute('data-animal-id', animal.id);
+    row.innerHTML = `
+        <td>${animal.id}</td>
+        <td>${animal.breed}</td>
+        <td>${animal.age}</td>
+        <td>${animal.weight}</td>
+        <td>${animal.lactation_stage}</td>
+        <td>${animal.parity}</td>
+        <td>${animal.milk_yield}</td>
+        <td><span class="badge bg-${getHealthStatusClass(animal.health_status)}">${animal.health_status}</span></td>
+        <td>
+            <button class="btn btn-sm" onclick="openEditAnimalModal(${animal.id})">
+                <i class="fas fa-edit"></i> Edit
+            </button>
+            <button class="btn btn-sm" onclick="deleteAnimal(${animal.id})">
+                <i class="fas fa-trash"></i> Delete
+            </button>
+        </td>
+    `;
+    tbody.appendChild(row);
+}
+
+function removeAnimalFromTable(animalId) {
+    const row = document.querySelector(`#animalsTable tbody tr[data-animal-id="${animalId}"]`);
+    if (row) {
+        row.remove();
+    }
+}
+
+function updateDashboardStats() {
+    if (!isConnected) {
+        loadDashboardData();
+    }
+}
+
+function updateDashboardUI(data) {
+    // Update statistics
+    document.getElementById('total-animals').textContent = data.total_animals || 0;
+    document.getElementById('avg-yield').textContent = data.avg_yield?.toFixed(1) || 0;
+    document.getElementById('healthy-animals').textContent = data.healthy_animals || 0;
+    document.getElementById('alerts-count').textContent = data.alerts?.length || 0;
+
+    // Update charts
+    if (data.health_distribution) {
+        updateHealthChart(data.health_distribution);
+    }
+    if (data.yield_by_breed) {
+        updateYieldChart(data.yield_by_breed);
+    }
+}
+
+// Initialize date inputs and load recent reports
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('date-range-end').value = today;
+    document.getElementById('date-range-end').max = today;
+    updateReportFields();
+    updateRecentReports();
+});
+    </script>
+
+    <!-- Add Animal Modal -->
+    <div class="modal fade" id="addAnimalModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Animal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addAnimalForm">
+                        <div class="mb-3">
+                            <label for="newBreed" class="form-label">Breed</label>
+                            <select class="form-control" id="newBreed" required>
+                                <option value="Holstein">Holstein</option>
+                                <option value="Jersey">Jersey</option>
+                                <option value="Sahiwal">Sahiwal</option>
+                                <option value="Guernsey">Guernsey</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newAge" class="form-label">Age (years)</label>
+                            <input type="number" step="0.1" class="form-control" id="newAge" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newWeight" class="form-label">Weight (kg)</label>
+                            <input type="number" class="form-control" id="newWeight" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newLactationStage" class="form-label">Lactation Stage</label>
+                            <input type="number" class="form-control" id="newLactationStage" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newParity" class="form-label">Parity</label>
+                            <input type="number" class="form-control" id="newParity" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newMilkYield" class="form-label">Milk Yield (L/day)</label>
+                            <input type="number" step="0.1" class="form-control" id="newMilkYield" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newHealthStatus" class="form-label">Health Status</label>
+                            <select class="form-control" id="newHealthStatus" required>
+                                <option value="Excellent">Excellent</option>
+                                <option value="Good">Good</option>
+                                <option value="Fair">Fair</option>
+                                <option value="Poor">Poor</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="createNewAnimal()">Add Animal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Animal Modal -->
+    <div class="modal fade" id="editAnimalModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Animal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editAnimalForm">
+                        <input type="hidden" id="editAnimalId">
+                        <div class="mb-3">
+                            <label class="form-label">ID</label>
+                            <input type="text" class="form-control" id="displayAnimalId" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Breed</label>
+                            <input type="text" class="form-control" id="displayBreed" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Age (years)</label>
+                            <input type="text" class="form-control" id="displayAge" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editWeight" class="form-label">Weight (kg)</label>
+                            <input type="number" class="form-control" id="editWeight" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editMilkYield" class="form-label">Milk Yield (L/day)</label>
+                            <input type="number" step="0.1" class="form-control" id="editMilkYield" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editHealthStatus" class="form-label">Health Status</label>
+                            <select class="form-control" id="editHealthStatus" required>
+                                <option value="Excellent">Excellent</option>
+                                <option value="Good">Good</option>
+                                <option value="Fair">Fair</option>
+                                <option value="Poor">Poor</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveAnimalEdit()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
